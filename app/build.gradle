@@ -1,0 +1,47 @@
+plugins {
+    id 'com.android.library'
+    id 'com.google.protobuf'
+}
+
+android {
+    namespace 'chat.cherish.xxim.core'
+    compileSdk 33
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 33
+        versionCode 100
+        versionName "1.0.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+    api 'com.google.protobuf:protobuf-javalite:3.8.0'
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.8.0'
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    option "lite"
+                }
+            }
+        }
+    }
+}
