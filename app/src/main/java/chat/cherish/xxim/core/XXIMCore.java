@@ -18,25 +18,21 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import chat.cherish.xxim.core.callback.RequestCallback;
-import chat.cherish.xxim.core.common.Params;
 import chat.cherish.xxim.core.common.Protocol;
 import chat.cherish.xxim.core.listener.ConnectListener;
 import chat.cherish.xxim.core.listener.ReceivePushListener;
 import pb.Core;
 
 public class XXIMCore {
-    private Params params;
     private int requestTimeout;
     private ConnectListener connectListener;
     private ReceivePushListener receivePushListener;
 
     public void init(
-            Params params,
             int requestTimeout,
             ConnectListener connectListener,
             ReceivePushListener receivePushListener
     ) {
-        this.params = params;
         this.requestTimeout = requestTimeout;
         this.connectListener = connectListener;
         this.receivePushListener = receivePushListener;
@@ -48,27 +44,12 @@ public class XXIMCore {
     private Map<String, Object> responseMap;
 
     // 登录
-    public void connect(
-            String wsUrl,
-            String token,
-            String userId,
-            String networkUsed
-    ) {
+    public void connect(String wsUrl) {
         try {
             if (connectListener != null) {
                 connectListener.onConnecting();
             }
-            String str = wsUrl + Protocol.webSocket + "?";
-            str += "token=" + token;
-            str += "&userId=" + userId;
-            str += "&networkUsed=" + networkUsed;
-            str += "&deviceId=" + params.deviceId;
-            str += "&platform=" + params.platform;
-            str += "&deviceModel=" + params.deviceModel;
-            str += "&osVersion=" + params.osVersion;
-            str += "&appVersion=" + params.appVersion;
-            str += "&language=" + params.language;
-            client = new WebSocketClient(new URI(str)) {
+            client = new WebSocketClient(new URI(wsUrl + Protocol.webSocket)) {
                 @Override
                 public void onOpen(ServerHandshake handshakedata) {
                 }
@@ -171,85 +152,123 @@ public class XXIMCore {
             } else if (body.getEvent() == Core.PushEvent.PushResponseBody) {
                 Core.ResponseBody response = Core.ResponseBody.parseFrom(body.getData());
                 String reqId = response.getReqId();
+                String method = response.getMethod();
                 Core.ResponseBody.Code code = response.getCode();
-                if (response.getEvent() == Core.ActiveEvent.SyncConvSeq) {
-                    Core.BatchGetConvSeqResp resp = Core.BatchGetConvSeqResp.parseFrom(
-                            response.getData()
-                    );
+                if (TextUtils.equals(method, Protocol.setCxnParams)) {
+                    if (responseMap != null && responseMap.containsKey(reqId)) {
+                        RequestCallback<Core.SetCxnParamsResp> callback =
+                                (RequestCallback<Core.SetCxnParamsResp>) responseMap.get(reqId);
+                        if (callback != null) {
+                            if (code == Core.ResponseBody.Code.Success) {
+                                callback.onSuccess(
+                                        Core.SetCxnParamsResp.parseFrom(response.getData())
+                                );
+                            } else {
+                                callback.onError(code.getNumber(), code.name());
+                            }
+                        }
+                        responseMap.remove(reqId);
+                    }
+                } else if (TextUtils.equals(method, Protocol.setUserParams)) {
+                    if (responseMap != null && responseMap.containsKey(reqId)) {
+                        RequestCallback<Core.SetUserParamsResp> callback =
+                                (RequestCallback<Core.SetUserParamsResp>) responseMap.get(reqId);
+                        if (callback != null) {
+                            if (code == Core.ResponseBody.Code.Success) {
+                                callback.onSuccess(
+                                        Core.SetUserParamsResp.parseFrom(response.getData())
+                                );
+                            } else {
+                                callback.onError(code.getNumber(), code.name());
+                            }
+                        }
+                        responseMap.remove(reqId);
+                    }
+                } else if (TextUtils.equals(method, Protocol.batchGetConvSeq)) {
                     if (responseMap != null && responseMap.containsKey(reqId)) {
                         RequestCallback<Core.BatchGetConvSeqResp> callback =
                                 (RequestCallback<Core.BatchGetConvSeqResp>) responseMap.get(reqId);
-                        if (code == Core.ResponseBody.Code.Success) {
-                            callback.onSuccess(resp);
-                        } else {
-                            callback.onError(code.getNumber(), code.name());
+                        if (callback != null) {
+                            if (code == Core.ResponseBody.Code.Success) {
+                                callback.onSuccess(
+                                        Core.BatchGetConvSeqResp.parseFrom(response.getData())
+                                );
+                            } else {
+                                callback.onError(code.getNumber(), code.name());
+                            }
                         }
                         responseMap.remove(reqId);
                     }
-                } else if (response.getEvent() == Core.ActiveEvent.SyncMsgList) {
-                    Core.GetMsgListResp resp = Core.GetMsgListResp.parseFrom(
-                            response.getData()
-                    );
+                } else if (TextUtils.equals(method, Protocol.batchGetMsgListByConvId)) {
                     if (responseMap != null && responseMap.containsKey(reqId)) {
                         RequestCallback<Core.GetMsgListResp> callback =
                                 (RequestCallback<Core.GetMsgListResp>) responseMap.get(reqId);
-                        if (code == Core.ResponseBody.Code.Success) {
-                            callback.onSuccess(resp);
-                        } else {
-                            callback.onError(code.getNumber(), code.name());
+                        if (callback != null) {
+                            if (code == Core.ResponseBody.Code.Success) {
+                                callback.onSuccess(
+                                        Core.GetMsgListResp.parseFrom(response.getData())
+                                );
+                            } else {
+                                callback.onError(code.getNumber(), code.name());
+                            }
                         }
                         responseMap.remove(reqId);
                     }
-                } else if (response.getEvent() == Core.ActiveEvent.GetMsgById) {
-                    Core.GetMsgByIdResp resp = Core.GetMsgByIdResp.parseFrom(
-                            response.getData()
-                    );
+                } else if (TextUtils.equals(method, Protocol.getMsgById)) {
                     if (responseMap != null && responseMap.containsKey(reqId)) {
                         RequestCallback<Core.GetMsgByIdResp> callback =
                                 (RequestCallback<Core.GetMsgByIdResp>) responseMap.get(reqId);
-                        if (code == Core.ResponseBody.Code.Success) {
-                            callback.onSuccess(resp);
-                        } else {
-                            callback.onError(code.getNumber(), code.name());
+                        if (callback != null) {
+                            if (code == Core.ResponseBody.Code.Success) {
+                                callback.onSuccess(
+                                        Core.GetMsgByIdResp.parseFrom(response.getData())
+                                );
+                            } else {
+                                callback.onError(code.getNumber(), code.name());
+                            }
                         }
                         responseMap.remove(reqId);
                     }
-                } else if (response.getEvent() == Core.ActiveEvent.SendMsgList) {
-                    Core.SendMsgListResp resp = Core.SendMsgListResp.parseFrom(
-                            response.getData()
-                    );
+                } else if (TextUtils.equals(method, Protocol.sendMsgList)) {
                     if (responseMap != null && responseMap.containsKey(reqId)) {
                         RequestCallback<Core.SendMsgListResp> callback =
                                 (RequestCallback<Core.SendMsgListResp>) responseMap.get(reqId);
-                        if (code == Core.ResponseBody.Code.Success) {
-                            callback.onSuccess(resp);
-                        } else {
-                            callback.onError(code.getNumber(), code.name());
+                        if (callback != null) {
+                            if (code == Core.ResponseBody.Code.Success) {
+                                callback.onSuccess(
+                                        Core.SendMsgListResp.parseFrom(response.getData())
+                                );
+                            } else {
+                                callback.onError(code.getNumber(), code.name());
+                            }
                         }
                         responseMap.remove(reqId);
                     }
-                } else if (response.getEvent() == Core.ActiveEvent.AckNotice) {
-                    Core.AckNoticeDataResp resp = Core.AckNoticeDataResp.parseFrom(
-                            response.getData()
-                    );
+                } else if (TextUtils.equals(method, Protocol.ackNoticeData)) {
                     if (responseMap != null && responseMap.containsKey(reqId)) {
                         RequestCallback<Core.AckNoticeDataResp> callback =
                                 (RequestCallback<Core.AckNoticeDataResp>) responseMap.get(reqId);
-                        if (code == Core.ResponseBody.Code.Success) {
-                            callback.onSuccess(resp);
-                        } else {
-                            callback.onError(code.getNumber(), code.name());
+                        if (callback != null) {
+                            if (code == Core.ResponseBody.Code.Success) {
+                                callback.onSuccess(
+                                        Core.AckNoticeDataResp.parseFrom(response.getData())
+                                );
+                            } else {
+                                callback.onError(code.getNumber(), code.name());
+                            }
                         }
                         responseMap.remove(reqId);
                     }
-                } else if (response.getEvent() == Core.ActiveEvent.CustomRequest) {
+                } else {
                     if (responseMap != null && responseMap.containsKey(reqId)) {
                         RequestCallback<ByteString> callback =
                                 (RequestCallback<ByteString>) responseMap.get(reqId);
-                        if (code == Core.ResponseBody.Code.Success) {
-                            callback.onSuccess(response.getData());
-                        } else {
-                            callback.onError(code.getNumber(), code.name());
+                        if (callback != null) {
+                            if (code == Core.ResponseBody.Code.Success) {
+                                callback.onSuccess(response.getData());
+                            } else {
+                                callback.onError(code.getNumber(), code.name());
+                            }
                         }
                         responseMap.remove(reqId);
                     }
@@ -257,6 +276,46 @@ public class XXIMCore {
             }
         } catch (InvalidProtocolBufferException ignored) {
         }
+    }
+
+    // 设置连接参数
+    public void setCxnParams(
+            String reqId,
+            Core.SetCxnParamsReq req,
+            RequestCallback<Core.SetCxnParamsResp> callback
+    ) {
+        if (responseMap != null) {
+            responseMap.put(reqId, callback);
+        }
+        Core.RequestBody request = Core.RequestBody.newBuilder()
+                .setReqId(reqId)
+                .setMethod(Protocol.setCxnParams)
+                .setData(req.toByteString())
+                .build();
+        if (client != null) {
+            client.send(request.toByteArray());
+        }
+        handleTimeout(reqId, callback);
+    }
+
+    // 设置用户参数
+    public void setUserParams(
+            String reqId,
+            Core.SetUserParamsReq req,
+            RequestCallback<Core.SetUserParamsResp> callback
+    ) {
+        if (responseMap != null) {
+            responseMap.put(reqId, callback);
+        }
+        Core.RequestBody request = Core.RequestBody.newBuilder()
+                .setReqId(reqId)
+                .setMethod(Protocol.setUserParams)
+                .setData(req.toByteString())
+                .build();
+        if (client != null) {
+            client.send(request.toByteArray());
+        }
+        handleTimeout(reqId, callback);
     }
 
     // 批量获取会话序列
@@ -269,8 +328,8 @@ public class XXIMCore {
             responseMap.put(reqId, callback);
         }
         Core.RequestBody request = Core.RequestBody.newBuilder()
-                .setEvent(Core.ActiveEvent.SyncConvSeq)
                 .setReqId(reqId)
+                .setMethod(Protocol.batchGetConvSeq)
                 .setData(req.toByteString())
                 .build();
         if (client != null) {
@@ -279,7 +338,7 @@ public class XXIMCore {
         handleTimeout(reqId, callback);
     }
 
-    // 批量获取消息列表-会话ID
+    // 批量获取消息列表
     public void batchGetMsgListByConvId(
             String reqId,
             Core.BatchGetMsgListByConvIdReq req,
@@ -289,8 +348,8 @@ public class XXIMCore {
             responseMap.put(reqId, callback);
         }
         Core.RequestBody request = Core.RequestBody.newBuilder()
-                .setEvent(Core.ActiveEvent.SyncMsgList)
                 .setReqId(reqId)
+                .setMethod(Protocol.batchGetMsgListByConvId)
                 .setData(req.toByteString())
                 .build();
         if (client != null) {
@@ -299,7 +358,7 @@ public class XXIMCore {
         handleTimeout(reqId, callback);
     }
 
-    // 获取消息-消息ID
+    // 获取消息
     public void getMsgById(
             String reqId,
             Core.GetMsgByIdReq req,
@@ -309,8 +368,8 @@ public class XXIMCore {
             responseMap.put(reqId, callback);
         }
         Core.RequestBody request = Core.RequestBody.newBuilder()
-                .setEvent(Core.ActiveEvent.GetMsgById)
                 .setReqId(reqId)
+                .setMethod(Protocol.getMsgById)
                 .setData(req.toByteString())
                 .build();
         if (client != null) {
@@ -329,8 +388,8 @@ public class XXIMCore {
             responseMap.put(reqId, callback);
         }
         Core.RequestBody request = Core.RequestBody.newBuilder()
-                .setEvent(Core.ActiveEvent.SendMsgList)
                 .setReqId(reqId)
+                .setMethod(Protocol.sendMsgList)
                 .setData(req.toByteString())
                 .build();
         if (client != null) {
@@ -349,8 +408,8 @@ public class XXIMCore {
             responseMap.put(reqId, callback);
         }
         Core.RequestBody request = Core.RequestBody.newBuilder()
-                .setEvent(Core.ActiveEvent.AckNotice)
                 .setReqId(reqId)
+                .setMethod(Protocol.ackNoticeData)
                 .setData(req.toByteString())
                 .build();
         if (client != null) {
@@ -362,6 +421,7 @@ public class XXIMCore {
     // 自定义请求
     public void customRequest(
             String reqId,
+            String method,
             ByteString byteString,
             RequestCallback<ByteString> callback
     ) {
@@ -369,8 +429,8 @@ public class XXIMCore {
             responseMap.put(reqId, callback);
         }
         Core.RequestBody request = Core.RequestBody.newBuilder()
-                .setEvent(Core.ActiveEvent.CustomRequest)
                 .setReqId(reqId)
+                .setMethod(method)
                 .setData(byteString)
                 .build();
         if (client != null) {
