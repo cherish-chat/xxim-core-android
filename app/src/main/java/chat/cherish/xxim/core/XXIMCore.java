@@ -28,10 +28,9 @@ public class XXIMCore {
     private ConnectListener connectListener;
     private ReceivePushListener receivePushListener;
 
-    public void init(
-            int requestTimeout,
-            ConnectListener connectListener,
-            ReceivePushListener receivePushListener
+    public void init(int requestTimeout,
+                     ConnectListener connectListener,
+                     ReceivePushListener receivePushListener
     ) {
         this.requestTimeout = requestTimeout;
         this.connectListener = connectListener;
@@ -279,10 +278,8 @@ public class XXIMCore {
     }
 
     // 设置连接参数
-    public void setCxnParams(
-            String reqId,
-            Core.SetCxnParamsReq req,
-            RequestCallback<Core.SetCxnParamsResp> callback
+    public void setCxnParams(String reqId, Core.SetCxnParamsReq req,
+                             RequestCallback<Core.SetCxnParamsResp> callback
     ) {
         if (responseMap != null) {
             responseMap.put(reqId, callback);
@@ -299,10 +296,8 @@ public class XXIMCore {
     }
 
     // 设置用户参数
-    public void setUserParams(
-            String reqId,
-            Core.SetUserParamsReq req,
-            RequestCallback<Core.SetUserParamsResp> callback
+    public void setUserParams(String reqId, Core.SetUserParamsReq req,
+                              RequestCallback<Core.SetUserParamsResp> callback
     ) {
         if (responseMap != null) {
             responseMap.put(reqId, callback);
@@ -319,10 +314,8 @@ public class XXIMCore {
     }
 
     // 批量获取会话序列
-    public void batchGetConvSeq(
-            String reqId,
-            Core.BatchGetConvSeqReq req,
-            RequestCallback<Core.BatchGetConvSeqResp> callback
+    public void batchGetConvSeq(String reqId, Core.BatchGetConvSeqReq req,
+                                RequestCallback<Core.BatchGetConvSeqResp> callback
     ) {
         if (responseMap != null) {
             responseMap.put(reqId, callback);
@@ -339,10 +332,8 @@ public class XXIMCore {
     }
 
     // 批量获取消息列表
-    public void batchGetMsgListByConvId(
-            String reqId,
-            Core.BatchGetMsgListByConvIdReq req,
-            RequestCallback<Core.GetMsgListResp> callback
+    public void batchGetMsgListByConvId(String reqId, Core.BatchGetMsgListByConvIdReq req,
+                                        RequestCallback<Core.GetMsgListResp> callback
     ) {
         if (responseMap != null) {
             responseMap.put(reqId, callback);
@@ -359,10 +350,8 @@ public class XXIMCore {
     }
 
     // 获取消息
-    public void getMsgById(
-            String reqId,
-            Core.GetMsgByIdReq req,
-            RequestCallback<Core.GetMsgByIdResp> callback
+    public void getMsgById(String reqId, Core.GetMsgByIdReq req,
+                           RequestCallback<Core.GetMsgByIdResp> callback
     ) {
         if (responseMap != null) {
             responseMap.put(reqId, callback);
@@ -379,10 +368,8 @@ public class XXIMCore {
     }
 
     // 发送消息列表
-    public void sendMsgList(
-            String reqId,
-            Core.SendMsgListReq req,
-            RequestCallback<Core.SendMsgListResp> callback
+    public void sendMsgList(String reqId, Core.SendMsgListReq req,
+                            RequestCallback<Core.SendMsgListResp> callback
     ) {
         if (responseMap != null) {
             responseMap.put(reqId, callback);
@@ -399,10 +386,8 @@ public class XXIMCore {
     }
 
     // 确认消费通知
-    public void ackNoticeData(
-            String reqId,
-            Core.AckNoticeDataReq req,
-            RequestCallback<Core.AckNoticeDataResp> callback
+    public void ackNoticeData(String reqId, Core.AckNoticeDataReq req,
+                              RequestCallback<Core.AckNoticeDataResp> callback
     ) {
         if (responseMap != null) {
             responseMap.put(reqId, callback);
@@ -419,11 +404,8 @@ public class XXIMCore {
     }
 
     // 自定义请求
-    public void customRequest(
-            String reqId,
-            String method,
-            ByteString byteString,
-            RequestCallback<ByteString> callback
+    public void customRequest(String reqId, String method,
+                              ByteString byteString, RequestCallback<ByteString> callback
     ) {
         if (responseMap != null) {
             responseMap.put(reqId, callback);
