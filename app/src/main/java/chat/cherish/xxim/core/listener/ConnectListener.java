@@ -9,7 +9,6 @@ interface IConnect {
 }
 
 public abstract class ConnectListener implements IConnect {
-
     @Override
     public void onConnecting() {
     }
