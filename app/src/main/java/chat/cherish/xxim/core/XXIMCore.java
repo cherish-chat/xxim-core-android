@@ -142,10 +142,10 @@ public class XXIMCore {
                             Core.MsgDataList.parseFrom(body.getData())
                     );
                 }
-            } else if (body.getEvent() == Core.PushEvent.PushNoticeDataList) {
+            } else if (body.getEvent() == Core.PushEvent.PushNoticeData) {
                 if (receivePushListener != null) {
-                    receivePushListener.onPushNoticeDataList(
-                            Core.NoticeDataList.parseFrom(body.getData())
+                    receivePushListener.onPushNoticeData(
+                            Core.NoticeData.parseFrom(body.getData())
                     );
                 }
             } else if (body.getEvent() == Core.PushEvent.PushResponseBody) {
