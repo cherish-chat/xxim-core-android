@@ -8,5 +8,5 @@ public class Protocol {
     public static String batchGetMsgListByConvId = "/v1/msg/batchGetMsgListByConvId"; // 批量获取消息列表
     public static String getMsgById = "/v1/msg/getMsgById"; // 获取消息
     public static String sendMsgList = "/v1/msg/sendMsgList"; // 发送消息列表
-    public static String ackNoticeData = "/v1/msg/ackNoticeData"; // 确认消费通知
+    public static String ackNoticeData = "/v1/notice/ackNoticeData"; // 确认消费通知
 }
