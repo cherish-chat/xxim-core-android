@@ -243,6 +243,36 @@ public class XXIMCore {
                         }
                         responseMap.remove(reqId);
                     }
+                } else if (TextUtils.equals(method, Protocol.sendReadMsg)) {
+                    if (responseMap != null && responseMap.containsKey(reqId)) {
+                        RequestCallback<Core.ReadMsgResp> callback =
+                                (RequestCallback<Core.ReadMsgResp>) responseMap.get(reqId);
+                        if (callback != null) {
+                            if (code == Core.ResponseBody.Code.Success) {
+                                callback.onSuccess(
+                                        Core.ReadMsgResp.parseFrom(response.getData())
+                                );
+                            } else {
+                                callback.onError(code.getNumber(), code.name());
+                            }
+                        }
+                        responseMap.remove(reqId);
+                    }
+                } else if (TextUtils.equals(method, Protocol.sendEditMsg)) {
+                    if (responseMap != null && responseMap.containsKey(reqId)) {
+                        RequestCallback<Core.EditMsgResp> callback =
+                                (RequestCallback<Core.EditMsgResp>) responseMap.get(reqId);
+                        if (callback != null) {
+                            if (code == Core.ResponseBody.Code.Success) {
+                                callback.onSuccess(
+                                        Core.EditMsgResp.parseFrom(response.getData())
+                                );
+                            } else {
+                                callback.onError(code.getNumber(), code.name());
+                            }
+                        }
+                        responseMap.remove(reqId);
+                    }
                 } else if (TextUtils.equals(method, Protocol.ackNoticeData)) {
                     if (responseMap != null && responseMap.containsKey(reqId)) {
                         RequestCallback<Core.AckNoticeDataResp> callback =
@@ -377,6 +407,42 @@ public class XXIMCore {
         Core.RequestBody request = Core.RequestBody.newBuilder()
                 .setReqId(reqId)
                 .setMethod(Protocol.sendMsgList)
+                .setData(req.toByteString())
+                .build();
+        if (client != null) {
+            client.send(request.toByteArray());
+        }
+        handleTimeout(reqId, callback);
+    }
+
+    // 发送已读消息
+    public void sendReadMsg(String reqId, Core.ReadMsgReq req,
+                            RequestCallback<Core.ReadMsgResp> callback
+    ) {
+        if (responseMap != null) {
+            responseMap.put(reqId, callback);
+        }
+        Core.RequestBody request = Core.RequestBody.newBuilder()
+                .setReqId(reqId)
+                .setMethod(Protocol.sendReadMsg)
+                .setData(req.toByteString())
+                .build();
+        if (client != null) {
+            client.send(request.toByteArray());
+        }
+        handleTimeout(reqId, callback);
+    }
+
+    // 发送编辑消息
+    public void sendEditMsg(String reqId, Core.EditMsgReq req,
+                            RequestCallback<Core.EditMsgResp> callback
+    ) {
+        if (responseMap != null) {
+            responseMap.put(reqId, callback);
+        }
+        Core.RequestBody request = Core.RequestBody.newBuilder()
+                .setReqId(reqId)
+                .setMethod(Protocol.sendEditMsg)
                 .setData(req.toByteString())
                 .build();
         if (client != null) {
