@@ -163,7 +163,10 @@ public class XXIMCore {
                                         Core.SetCxnParamsResp.parseFrom(response.getData())
                                 );
                             } else {
-                                callback.onError(code.getNumber(), code.name());
+                                callback.onError(
+                                        code.getNumber(),
+                                        response.getData().toStringUtf8()
+                                );
                             }
                         }
                         responseMap.remove(reqId);
@@ -178,7 +181,10 @@ public class XXIMCore {
                                         Core.SetUserParamsResp.parseFrom(response.getData())
                                 );
                             } else {
-                                callback.onError(code.getNumber(), code.name());
+                                callback.onError(
+                                        code.getNumber(),
+                                        response.getData().toStringUtf8()
+                                );
                             }
                         }
                         responseMap.remove(reqId);
@@ -193,7 +199,10 @@ public class XXIMCore {
                                         Core.BatchGetConvSeqResp.parseFrom(response.getData())
                                 );
                             } else {
-                                callback.onError(code.getNumber(), code.name());
+                                callback.onError(
+                                        code.getNumber(),
+                                        response.getData().toStringUtf8()
+                                );
                             }
                         }
                         responseMap.remove(reqId);
@@ -208,7 +217,10 @@ public class XXIMCore {
                                         Core.GetMsgListResp.parseFrom(response.getData())
                                 );
                             } else {
-                                callback.onError(code.getNumber(), code.name());
+                                callback.onError(
+                                        code.getNumber(),
+                                        response.getData().toStringUtf8()
+                                );
                             }
                         }
                         responseMap.remove(reqId);
@@ -223,7 +235,10 @@ public class XXIMCore {
                                         Core.GetMsgByIdResp.parseFrom(response.getData())
                                 );
                             } else {
-                                callback.onError(code.getNumber(), code.name());
+                                callback.onError(
+                                        code.getNumber(),
+                                        response.getData().toStringUtf8()
+                                );
                             }
                         }
                         responseMap.remove(reqId);
@@ -238,7 +253,10 @@ public class XXIMCore {
                                         Core.SendMsgListResp.parseFrom(response.getData())
                                 );
                             } else {
-                                callback.onError(code.getNumber(), code.name());
+                                callback.onError(
+                                        code.getNumber(),
+                                        response.getData().toStringUtf8()
+                                );
                             }
                         }
                         responseMap.remove(reqId);
@@ -253,7 +271,10 @@ public class XXIMCore {
                                         Core.ReadMsgResp.parseFrom(response.getData())
                                 );
                             } else {
-                                callback.onError(code.getNumber(), code.name());
+                                callback.onError(
+                                        code.getNumber(),
+                                        response.getData().toStringUtf8()
+                                );
                             }
                         }
                         responseMap.remove(reqId);
@@ -268,7 +289,10 @@ public class XXIMCore {
                                         Core.EditMsgResp.parseFrom(response.getData())
                                 );
                             } else {
-                                callback.onError(code.getNumber(), code.name());
+                                callback.onError(
+                                        code.getNumber(),
+                                        response.getData().toStringUtf8()
+                                );
                             }
                         }
                         responseMap.remove(reqId);
@@ -283,7 +307,10 @@ public class XXIMCore {
                                         Core.AckNoticeDataResp.parseFrom(response.getData())
                                 );
                             } else {
-                                callback.onError(code.getNumber(), code.name());
+                                callback.onError(
+                                        code.getNumber(),
+                                        response.getData().toStringUtf8()
+                                );
                             }
                         }
                         responseMap.remove(reqId);
@@ -296,7 +323,10 @@ public class XXIMCore {
                             if (code == Core.ResponseBody.Code.Success) {
                                 callback.onSuccess(response.getData());
                             } else {
-                                callback.onError(code.getNumber(), code.name());
+                                callback.onError(
+                                        code.getNumber(),
+                                        response.getData().toStringUtf8()
+                                );
                             }
                         }
                         responseMap.remove(reqId);
