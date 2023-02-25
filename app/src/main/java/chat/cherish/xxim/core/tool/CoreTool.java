@@ -20,7 +20,7 @@ public class CoreTool {
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             PublicKey publicKey = keyFactory.generatePublic(keySpec);
-            Cipher cipher = Cipher.getInstance("RSA");
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
             return cipher.doFinal(value.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
