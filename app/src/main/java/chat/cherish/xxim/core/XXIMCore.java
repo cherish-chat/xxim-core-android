@@ -13,14 +13,17 @@ import org.java_websocket.handshake.ServerHandshake;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import chat.cherish.xxim.core.callback.RequestCallback;
+import chat.cherish.xxim.core.common.CxnParams;
 import chat.cherish.xxim.core.common.Protocol;
 import chat.cherish.xxim.core.listener.ConnectListener;
 import chat.cherish.xxim.core.listener.ReceivePushListener;
+import chat.cherish.xxim.core.tool.CoreTool;
 import pb.Core;
 
 public class XXIMCore {
@@ -41,6 +44,7 @@ public class XXIMCore {
     private Timer timer;
     private TimerTask timerTask;
     private Map<String, Object> responseMap;
+    private CxnParams cxnParams;
 
     // 登录
     public void connect(String wsUrl) {
@@ -103,9 +107,10 @@ public class XXIMCore {
             responseMap.clear();
             responseMap = null;
         }
+        cxnParams = null;
     }
 
-    /// 是否登录
+    // 是否登录
     public boolean isConnect() {
         return client != null && client.isClosed();
     }
@@ -135,7 +140,15 @@ public class XXIMCore {
 
     private void handleMessage(ByteBuffer buffer) {
         try {
-            Core.PushBody body = Core.PushBody.parseFrom(buffer.array());
+            byte[] data = buffer.array();
+            if (cxnParams != null) {
+                data = CoreTool.aesDecode(
+                        CoreTool.md5Encode32(cxnParams.aesKey),
+                        CoreTool.md5Encode16(cxnParams.aesIv),
+                        buffer.array()
+                );
+            }
+            Core.PushBody body = Core.PushBody.parseFrom(data);
             if (body.getEvent() == Core.PushEvent.PushMsgDataList) {
                 if (receivePushListener != null) {
                     receivePushListener.onPushMsgDataList(
@@ -337,13 +350,55 @@ public class XXIMCore {
         }
     }
 
+    private void sendData(byte[] data) {
+        if (cxnParams != null) {
+            data = CoreTool.aesEncode(
+                    CoreTool.md5Encode32(cxnParams.aesKey),
+                    CoreTool.md5Encode16(cxnParams.aesIv),
+                    data
+            );
+        }
+        if (client != null) {
+            client.send(data);
+        }
+    }
+
     // 设置连接参数
-    public void setCxnParams(String reqId, Core.SetCxnParamsReq req,
-                             RequestCallback<Core.SetCxnParamsResp> callback
+    public void setCxnParams(String reqId, String packageId, String rsaPublicKey,
+                             CxnParams cxnParams, RequestCallback<Core.SetCxnParamsResp> callback
     ) {
         if (responseMap != null) {
             responseMap.put(reqId, callback);
         }
+        byte[] aesKey = new byte[]{};
+        byte[] aesIv = new byte[]{};
+        if (!TextUtils.isEmpty(rsaPublicKey) &&
+                !TextUtils.isEmpty(cxnParams.aesKey) &&
+                !TextUtils.isEmpty(cxnParams.aesIv)) {
+            this.cxnParams = cxnParams;
+            aesKey = CoreTool.rsaEncode(
+                    rsaPublicKey,
+                    cxnParams.aesKey
+            );
+            aesIv = CoreTool.rsaEncode(
+                    rsaPublicKey,
+                    cxnParams.aesIv
+            );
+        }
+        byte[] ext = cxnParams.ext.getBytes(StandardCharsets.UTF_8);
+        Core.SetCxnParamsReq req = Core.SetCxnParamsReq.newBuilder()
+                .setPackageId(packageId)
+                .setPlatform(cxnParams.platform)
+                .setDeviceId(cxnParams.deviceId)
+                .setDeviceModel(cxnParams.deviceModel)
+                .setOsVersion(cxnParams.osVersion)
+                .setAppVersion(cxnParams.appVersion)
+                .setLanguage(cxnParams.language)
+                .setNetworkUsed(cxnParams.networkUsed)
+                .setAesKey(ByteString.copyFrom(aesKey))
+                .setAesIv(ByteString.copyFrom(aesIv))
+                .setExt(ByteString.copyFrom(ext))
+                .build();
         Core.RequestBody request = Core.RequestBody.newBuilder()
                 .setReqId(reqId)
                 .setMethod(Protocol.setCxnParams)
@@ -367,9 +422,7 @@ public class XXIMCore {
                 .setMethod(Protocol.setUserParams)
                 .setData(req.toByteString())
                 .build();
-        if (client != null) {
-            client.send(request.toByteArray());
-        }
+        sendData(request.toByteArray());
         handleTimeout(reqId, callback);
     }
 
@@ -385,9 +438,7 @@ public class XXIMCore {
                 .setMethod(Protocol.batchGetConvSeq)
                 .setData(req.toByteString())
                 .build();
-        if (client != null) {
-            client.send(request.toByteArray());
-        }
+        sendData(request.toByteArray());
         handleTimeout(reqId, callback);
     }
 
@@ -403,9 +454,7 @@ public class XXIMCore {
                 .setMethod(Protocol.batchGetMsgListByConvId)
                 .setData(req.toByteString())
                 .build();
-        if (client != null) {
-            client.send(request.toByteArray());
-        }
+        sendData(request.toByteArray());
         handleTimeout(reqId, callback);
     }
 
@@ -421,9 +470,7 @@ public class XXIMCore {
                 .setMethod(Protocol.getMsgById)
                 .setData(req.toByteString())
                 .build();
-        if (client != null) {
-            client.send(request.toByteArray());
-        }
+        sendData(request.toByteArray());
         handleTimeout(reqId, callback);
     }
 
@@ -439,9 +486,7 @@ public class XXIMCore {
                 .setMethod(Protocol.sendMsgList)
                 .setData(req.toByteString())
                 .build();
-        if (client != null) {
-            client.send(request.toByteArray());
-        }
+        sendData(request.toByteArray());
         handleTimeout(reqId, callback);
     }
 
@@ -457,9 +502,7 @@ public class XXIMCore {
                 .setMethod(Protocol.sendReadMsg)
                 .setData(req.toByteString())
                 .build();
-        if (client != null) {
-            client.send(request.toByteArray());
-        }
+        sendData(request.toByteArray());
         handleTimeout(reqId, callback);
     }
 
@@ -475,9 +518,7 @@ public class XXIMCore {
                 .setMethod(Protocol.sendEditMsg)
                 .setData(req.toByteString())
                 .build();
-        if (client != null) {
-            client.send(request.toByteArray());
-        }
+        sendData(request.toByteArray());
         handleTimeout(reqId, callback);
     }
 
@@ -493,9 +534,7 @@ public class XXIMCore {
                 .setMethod(Protocol.ackNoticeData)
                 .setData(req.toByteString())
                 .build();
-        if (client != null) {
-            client.send(request.toByteArray());
-        }
+        sendData(request.toByteArray());
         handleTimeout(reqId, callback);
     }
 
@@ -511,9 +550,7 @@ public class XXIMCore {
                 .setMethod(method)
                 .setData(byteString)
                 .build();
-        if (client != null) {
-            client.send(request.toByteArray());
-        }
+        sendData(request.toByteArray());
         handleTimeout(reqId, callback);
     }
 
