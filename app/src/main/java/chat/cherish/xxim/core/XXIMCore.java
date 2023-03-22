@@ -44,7 +44,8 @@ public class XXIMCore {
     private Timer timer;
     private TimerTask timerTask;
     private Map<String, Object> responseMap;
-    private CxnParams cxnParams;
+    private String aesKey;
+    private String aesIv;
 
     // 登录
     public void connect(String wsUrl) {
@@ -59,12 +60,6 @@ public class XXIMCore {
 
                 @Override
                 public void onMessage(String message) {
-                    if (TextUtils.equals(message, "connected")) {
-                        if (connectListener != null) {
-                            connectListener.onSuccess();
-                        }
-                        startPing();
-                    }
                 }
 
                 @Override
@@ -88,6 +83,8 @@ public class XXIMCore {
                     }
                 }
             };
+            client.setConnectionLostTimeout(30);
+            client.setTcpNoDelay(true);
             client.connect();
             responseMap = new ArrayMap<>();
         } catch (URISyntaxException e) {
@@ -107,7 +104,8 @@ public class XXIMCore {
             responseMap.clear();
             responseMap = null;
         }
-        cxnParams = null;
+        aesKey = null;
+        aesIv = null;
     }
 
     // 是否登录
@@ -141,15 +139,21 @@ public class XXIMCore {
     private void handleMessage(ByteBuffer buffer) {
         try {
             byte[] data = buffer.array();
-            if (cxnParams != null) {
+            if (aesKey != null && !TextUtils.isEmpty(aesKey) &&
+                    aesIv != null && !TextUtils.isEmpty(aesIv)) {
                 data = CoreTool.aesDecode(
-                        CoreTool.md5Encode32(cxnParams.aesKey),
-                        CoreTool.md5Encode16(cxnParams.aesIv),
+                        CoreTool.md5Encode32(aesKey),
+                        CoreTool.md5Encode16(aesIv),
                         buffer.array()
                 );
             }
             Core.PushBody body = Core.PushBody.parseFrom(data);
-            if (body.getEvent() == Core.PushEvent.PushMsgDataList) {
+            if (body.getEvent() == Core.PushEvent.PushAfterConnect) {
+                if (connectListener != null) {
+                    connectListener.onSuccess();
+                }
+                startPing();
+            } else if (body.getEvent() == Core.PushEvent.PushMsgDataList) {
                 if (receivePushListener != null) {
                     receivePushListener.onPushMsgDataList(
                             Core.MsgDataList.parseFrom(body.getData())
@@ -351,10 +355,11 @@ public class XXIMCore {
     }
 
     private void sendData(byte[] data) {
-        if (cxnParams != null) {
+        if (aesKey != null && !TextUtils.isEmpty(aesKey) &&
+                aesIv != null && !TextUtils.isEmpty(aesIv)) {
             data = CoreTool.aesEncode(
-                    CoreTool.md5Encode32(cxnParams.aesKey),
-                    CoreTool.md5Encode16(cxnParams.aesIv),
+                    CoreTool.md5Encode32(aesKey),
+                    CoreTool.md5Encode16(aesIv),
                     data
             );
         }
@@ -364,25 +369,25 @@ public class XXIMCore {
     }
 
     // 设置连接参数
-    public void setCxnParams(String reqId, String packageId, String rsaPublicKey,
+    public void setCxnParams(String reqId, String packageId, String rsaPublicKey, String aesKey,
                              CxnParams cxnParams, RequestCallback<Core.SetCxnParamsResp> callback
     ) {
         if (responseMap != null) {
             responseMap.put(reqId, callback);
         }
-        byte[] aesKey = new byte[]{};
-        byte[] aesIv = new byte[]{};
+        byte[] aesKeyList = new byte[]{};
+        byte[] aesIvList = new byte[]{};
         if (!TextUtils.isEmpty(rsaPublicKey) &&
-                !TextUtils.isEmpty(cxnParams.aesKey) &&
-                !TextUtils.isEmpty(cxnParams.aesIv)) {
-            this.cxnParams = cxnParams;
-            aesKey = CoreTool.rsaEncode(
+                !TextUtils.isEmpty(aesKey) &&
+                !TextUtils.isEmpty(aesIv)) {
+            this.aesKey = aesKey;
+            aesKeyList = CoreTool.rsaEncode(
                     rsaPublicKey,
-                    cxnParams.aesKey
+                    aesKey
             );
-            aesIv = CoreTool.rsaEncode(
+            aesIvList = CoreTool.rsaEncode(
                     rsaPublicKey,
-                    cxnParams.aesIv
+                    aesIv
             );
         }
         byte[] ext = cxnParams.ext.getBytes(StandardCharsets.UTF_8);
@@ -395,8 +400,8 @@ public class XXIMCore {
                 .setAppVersion(cxnParams.appVersion)
                 .setLanguage(cxnParams.language)
                 .setNetworkUsed(cxnParams.networkUsed)
-                .setAesKey(ByteString.copyFrom(aesKey))
-                .setAesIv(ByteString.copyFrom(aesIv))
+                .setAesKey(ByteString.copyFrom(aesKeyList))
+                .setAesIv(ByteString.copyFrom(aesIvList))
                 .setExt(ByteString.copyFrom(ext))
                 .build();
         Core.RequestBody request = Core.RequestBody.newBuilder()
