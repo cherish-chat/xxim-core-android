@@ -149,6 +149,7 @@ public class XXIMCore {
             }
             Core.PushBody body = Core.PushBody.parseFrom(data);
             if (body.getEvent() == Core.PushEvent.PushAfterConnect) {
+                aesIv = Core.AfterConnectBody.parseFrom(body.getData()).getAesIv();
                 if (connectListener != null) {
                     connectListener.onSuccess();
                 }
